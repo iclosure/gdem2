@@ -84,24 +84,24 @@ bool gdem2_convert(const std::string &source, const std::string &target)
 		return false;
 	}
 
-	char buffer[4096] = { 0 };
+	char buffer[8192] = { 0 };
 
 	// read source header
 	fseek(ifp, 8, SEEK_SET);
 
 	// write target header
 	const unsigned char header[8] = { 0xAA, 0x55, 0x64, 0x00, 0x01, 0x00, 0x00, 0x00 };
-	const size_t header_size = sizeof(header);
-	size_t writed_size = fwrite(static_cast<const char*>(buffer), sizeof(unsigned char), 8, ofp);
-	if (writed_size != header_size) {
+	size_t writed_size = fwrite(header, sizeof(unsigned char), _countof(header), ofp);
+	if (writed_size != sizeof(header)) {
 		std::cerr << "error: write source file \"" << source << "\" failure!" << std::endl;
 		fclose(ifp);
 		fclose(ofp);
 		return false;
 	}
 
-	const size_t TOTAL_SIZE = header_size + 3601 * 3601 * 2;
-	size_t totalSize = header_size;
+	const size_t TOTAL_SIZE = sizeof(header) + 3601 * 3601 * 2;
+	size_t totalSize = sizeof(header);
+
 	while (!feof(ifp)) {
 		size_t size = fread(buffer, sizeof(char), _countof(buffer), ifp);
 		if (size == 0) {
@@ -132,7 +132,8 @@ bool gdem2_convert(const std::string &source, const std::string &target)
 
 	const size_t targetSize = get_file_size(target);
 
-	std::cout << "Size of target file \"" << target << "\" is " << targetSize << std::endl;
+	std::cout << "Size of target file \"" << string_section(target, "\\", -1, -1) 
+		<< "\" is " << targetSize << std::endl;
 
 	return true;
 }
