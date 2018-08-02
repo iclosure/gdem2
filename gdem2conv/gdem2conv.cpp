@@ -33,7 +33,7 @@ int main()
 		return -1;
 	}
 
-	const std::string targetPath = path + "\\files";
+	const std::string targetPath = path + "\\..\\files";
 	if (!create_path(targetPath)) {
 		std::cerr << "error: create path \"" << path << "\" failure!" << std::endl;
 		system("pause");
@@ -63,41 +63,76 @@ int main()
 
 bool gdem2_convert(const std::string &source, const std::string &target)
 {
-	std::ifstream ifs(source, std::ios::in | std::ios::binary);
-	std::ofstream ofs(target, std::ios::out | std::ios::binary | std::ios::trunc);
+	FILE *ifp = nullptr, *ofp = nullptr;
 
-	if (!ifs.is_open()) {
-		std::cout << "source file \"" << source << "\" open failure!" << std::endl;
+	if (fopen_s(&ifp, source.c_str(), "rb") == -1) {
+		std::cerr << "error: source file \"" << source << "\" open failure!" << std::endl;
 		return false;
 	}
 
-	if (!ofs.is_open()) {
-		std::cout << "target file \"" << target << "\" open failure!" << std::endl;
+	if (fopen_s(&ofp, target.c_str(), "wb") == -1) {
+		std::cerr << "error: target file \"" << target << "\" open failure!" << std::endl;
+		fclose(ifp);
 		return false;
 	}
 
 	// check contents
 	if (get_file_size(source) < 8) {
-		std::cout << "source file \"" << source << "\" is too small!" << std::endl;
+		std::cerr << "error: source file \"" << source << "\" is too small!" << std::endl;
+		fclose(ifp);
+		fclose(ofp);
 		return false;
 	}
 
 	char buffer[4096] = { 0 };
 
 	// read source header
-	ifs.seekg(8);
+	fseek(ifp, 8, SEEK_SET);
 
 	// write target header
 	const unsigned char header[8] = { 0xAA, 0x55, 0x64, 0x00, 0x01, 0x00, 0x00, 0x00 };
-	const int size = sizeof(header);
-	ofs.write(static_cast<const char*>(buffer), sizeof(header));
-
-	while (ifs.read(buffer, 4096)) {
-		//
+	const size_t header_size = sizeof(header);
+	size_t writed_size = fwrite(static_cast<const char*>(buffer), sizeof(unsigned char), 8, ofp);
+	if (writed_size != header_size) {
+		std::cerr << "error: write source file \"" << source << "\" failure!" << std::endl;
+		fclose(ifp);
+		fclose(ofp);
+		return false;
 	}
 
-	ifs.close();
-	ofs.close();
+	const size_t TOTAL_SIZE = header_size + 3601 * 3601 * 2;
+	size_t totalSize = header_size;
+	while (!feof(ifp)) {
+		size_t size = fread(buffer, sizeof(char), _countof(buffer), ifp);
+		if (size == 0) {
+			break;
+		}
+
+		if (totalSize + size > TOTAL_SIZE) {
+			size = TOTAL_SIZE - totalSize;
+		}
+
+		writed_size = fwrite(buffer, sizeof(char), size, ofp);
+		if (writed_size != size) {
+			std::cerr << "error: write target file \"" << target << "\" failure!" << std::endl;
+			fclose(ifp);
+			fclose(ofp);
+			return false;
+		}
+
+		totalSize += size;
+
+		if (totalSize == TOTAL_SIZE) {
+			break;
+		}
+	}
+
+	fclose(ifp);
+	fclose(ofp);
+
+	const size_t targetSize = get_file_size(target);
+
+	std::cout << "Size of target file \"" << target << "\" is " << targetSize << std::endl;
 
 	return true;
 }

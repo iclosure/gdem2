@@ -64,7 +64,7 @@ void get_files(const std::string &path, std::vector<std::string> &files, const s
 
 _fsize_t get_file_size(const std::string &file)
 {
-#if 1
+#if 0
 	FILE *fp = nullptr;
 	errno_t errpr = fopen_s(&fp, file.c_str(), "rb");
 	if (errpr != 0) {
