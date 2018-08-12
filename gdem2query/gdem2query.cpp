@@ -14,9 +14,10 @@
 #define _HEADER_SIZE 8
 #define _MAX_FILENAME 12
 #define _MAX_PATH 260
-#define _GDEM2_PATH_PREFIX "C:\\Users\\iclosure\\Documents\\workspace\\files"
+#define _GDEM2_PATH_PREFIX "C:\\Users\\iclosure\\Documents\\workspace\\GDEM2"
 #define __max(a,b) (((a) > (b)) ? (a) : (b))
 #define __min(a,b) (((a) < (b)) ? (a) : (b))
+#define _POS_PRECISION (1) // ″
 
 typedef short gdem2_int16;
 typedef unsigned short gdem2_uint16;
@@ -111,10 +112,9 @@ int gdem2_gen_filepath(char *filepath, size_t filepath_size, double lat, double 
 	return 0;
 }
 
-int gdem2_get_pos(double lat, double lon, int *pos_lat, int *pos_lon)
+int gdem2_get_pos(double lat, double lon, double *pos_lat, double *pos_lon)
 {
 	double fabs_lat = 0.0, fabs_lon = 0.0;
-	double dot_lat = 0.0, dot_lon = 0.0;
 
 	if (0 == pos_lat || 0 == pos_lon) {
 		return -1;
@@ -122,11 +122,8 @@ int gdem2_get_pos(double lat, double lon, int *pos_lat, int *pos_lon)
 
 	fabs_lat = fabs(lat);
 	fabs_lon = fabs(lon);
-	dot_lat = fabs_lat - (int)floor(fabs_lat);
-	dot_lon = fabs_lon - (int)floor(fabs_lon);
-
-	*pos_lat = (int)floor(dot_lat * 3600);
-	*pos_lon = (int)floor(dot_lon * 3600);
+	*pos_lat = fabs_lat - (int)floor(fabs_lat);
+	*pos_lon = fabs_lon - (int)floor(fabs_lon);
 
 	return 0;
 }
@@ -134,8 +131,8 @@ int gdem2_get_pos(double lat, double lon, int *pos_lat, int *pos_lon)
 int gdem2_query_point(double lat, double lon)
 {
 	char filepath[_MAX_PATH];
-	int pos_lat = 0, pos_lon = 0;
-	int offset = 0, height = 0;
+	double pos_lat = 0, pos_lon = 0;
+	int offset = 0, height = 0, x = 0, y = 0;
 	char buffer[10];
 	size_t fsize = 0;
 
@@ -154,7 +151,9 @@ int gdem2_query_point(double lat, double lon)
 		return 0;
 	}
 
-	offset = _HEADER_SIZE + pos_lat * pos_lon * 2;
+	x = (int)(pos_lon * 3600);
+	y = (int)((1 - pos_lat) * 3600);
+	offset = _HEADER_SIZE + (x + y * 3601) * 2;
 
 	if (-1 == fseek(fp, offset, SEEK_SET)) {
 		fclose(fp);
@@ -166,7 +165,7 @@ int gdem2_query_point(double lat, double lon)
 		fclose(fp);
 		return 0;
 	}
-
+	
 	height = *(gdem2_int16*)buffer;
 
 	fclose(fp);
