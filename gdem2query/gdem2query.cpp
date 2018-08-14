@@ -131,7 +131,7 @@ int gdem2_get_pos(double lat, double lon, double *pos_lat, double *pos_lon)
 int gdem2_query_point(double lat, double lon)
 {
 	char filepath[_MAX_PATH];
-	double pos_lat = 0, pos_lon = 0;
+	double pos_lat = 0.0, pos_lon = 0.0;
 	int offset = 0, height = 0, x = 0, y = 0;
 	char buffer[10];
 	size_t fsize = 0;

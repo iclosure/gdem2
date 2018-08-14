@@ -112,19 +112,20 @@ bool create_path(const std::string &path)
 		_path += "\\";
 	}
 
-	std::string::size_type startpos(0);
-	std::string::size_type endpos(0);
+	std::string::size_type startpos = std::string::npos;
+	std::string::size_type endpos = std::string::npos;
 
 	while (true) {
 		if ((endpos = _path.find("\\", startpos)) != std::string::npos) {
 			std::string folder = _path.substr(0, endpos);
-			startpos = endpos + std::string::size_type(1);
+			startpos = endpos + 1;
 
 			if (folder.rfind(":") == (folder.size() - 1)) {
 				continue;
 			}
 
-			struct _stat filestat = { 0 };
+			struct _stat filestat;
+			memset(&filestat, 0, sizeof(filestat));
 			if (_stat(folder.c_str(), &filestat) == 0) {
 				if (!(filestat.st_mode & _S_IFDIR)) {
 					return false;
@@ -225,8 +226,8 @@ void string_split(const std::string &str, const std::string &delim,
 	std::vector<std::string> &ret, bool keepEmptyParts)
 {
 	ret.clear();
-	std::size_t last = 0;
-	std::size_t index = str.find_first_of(delim, last);
+	std::string::size_type last = std::string::npos;
+	std::string::size_type index = str.find_first_of(delim, last);
 	std::string sTemp;
 	while (index != std::string::npos) {
 		sTemp = str.substr(last, index - last);
@@ -253,23 +254,23 @@ std::string string_trim(const std::string &str)
 		return std::string();
 	}
 
-	std::string::size_type pos = str.find_first_not_of(' ');
-	if (pos == std::string::npos) {
+	std::string::size_type start = str.find_first_not_of(' ');
+	if (start == std::string::npos) {
 		return str;
 	}
 
-	std::string::size_type pos2 = str.find_last_not_of(' ');
-	if (pos2 != std::string::npos) {
-		return str.substr(pos, pos2 - pos + 1);
+	std::string::size_type end = str.find_last_not_of(' ');
+	if (end != std::string::npos) {
+		return str.substr(start, end - start + 1);
 	}
 
-	return str.substr(pos);
+	return str.substr(start);
 }
 
 std::string &string_replace(std::string &str, const std::string &old_str,
 	const std::string &new_str)
 {
-	std::string::size_type pos = 0;
+	std::string::size_type pos = std::string::npos;
 	const std::string::size_type old_length = old_str.size();
 	const std::string::size_type new_length = new_str.size();
 	while ((pos = str.find(old_str, pos)) != std::string::npos) {
