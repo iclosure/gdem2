@@ -11,7 +11,6 @@
 #pragma warning(disable : 4996)
 #endif
 
-#define _HEADER_SIZE 8
 #define _MAX_FILENAME 12
 #define _MAX_PATH 260
 #define _GDEM2_PATH_PREFIX "C:\\Users\\iclosure\\Documents\\workspace\\GDEM2"
@@ -19,7 +18,20 @@
 #define __min(a,b) (((a) < (b)) ? (a) : (b))
 #define _PRECISION (100)
 #define _PRECISION_SCALE (0.01)
+const gdem2_uint32 _HEADER_SIZE = 8;
 const gdem2_uint32 _MATRIX_SIZE = ((gdem2_uint32)((3600UL / (_PRECISION * _PRECISION_SCALE) + 1UL)));
+
+int get_file_size(char *filepath, size_t filepath_size)
+{
+	FILE *fp = fopen(filepath, "rb");
+	if (fp != 0) {
+		return -1;
+	}
+	fseek(fp, 0L, SEEK_END);
+	long size = ftell(fp);
+	fclose(fp);
+	return size;
+}
 
 int gdem2_gen_filename(char *name, size_t name_size, double lat, double lon)
 {
@@ -129,9 +141,8 @@ gdem2_int16 gdem2_query_point(double lat, double lon)
 {
 	char filepath[_MAX_PATH];
 	double dot_lat = 0.0, dot_lon = 0.0;
-	gdem2_uint32 offset = 0, height = 0, x = 0, y = 0, line_count = 0;
+	gdem2_uint32 x = 0, y = 0, offset = 0, height = 0;
 	char buffer[2];
-	size_t fsize = 0;
 
 	memset(filepath, 0, sizeof(filepath));
 
@@ -147,13 +158,13 @@ gdem2_int16 gdem2_query_point(double lat, double lon)
 	if (0 == fp) {
 		return 0;
 	}
-
-	x = (gdem2_uint32)(dot_lon * (_MATRIX_SIZE - 1));
+	
+	x = (gdem2_uint32)round(dot_lon * (_MATRIX_SIZE - 1));
 	if (x >= _MATRIX_SIZE) {
 		x = _MATRIX_SIZE - 1;
 	}
 
-	y = (gdem2_uint32)((1 - dot_lat) * (_MATRIX_SIZE - 1));
+	y = (gdem2_uint32)round((1 - dot_lat) * (_MATRIX_SIZE - 1));
 	if (y >= _MATRIX_SIZE) {
 		y = _MATRIX_SIZE - 1;
 	}
@@ -165,8 +176,7 @@ gdem2_int16 gdem2_query_point(double lat, double lon)
 		return 0;
 	}
 
-	fsize = fread(buffer, sizeof(char), 2, fp);
-	if (2 != fsize) {
+	if (2 != fread(buffer, sizeof(char), 2, fp)) {
 		fclose(fp);
 		return 0;
 	}

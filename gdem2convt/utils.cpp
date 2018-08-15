@@ -112,7 +112,7 @@ bool create_path(const std::string &path)
 		_path += "\\";
 	}
 
-	std::string::size_type startpos = std::string::npos;
+	std::string::size_type startpos = 0;
 	std::string::size_type endpos = std::string::npos;
 
 	while (true) {
@@ -226,7 +226,7 @@ void string_split(const std::string &str, const std::string &delim,
 	std::vector<std::string> &ret, bool keepEmptyParts)
 {
 	ret.clear();
-	std::string::size_type last = std::string::npos;
+	std::string::size_type last = 0;
 	std::string::size_type index = str.find_first_of(delim, last);
 	std::string sTemp;
 	while (index != std::string::npos) {

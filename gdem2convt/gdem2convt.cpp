@@ -68,7 +68,7 @@ bool gdem2_convert(const std::string &source, const std::string &target)
 		return false;
 	}
 
-	if (fopen_s(&ofp, target.c_str(), "wb") == -1) {
+	if (fopen_s(&ofp, target.c_str(), "wb+") == -1) {
 		std::cerr << "error: target file \"" << target << "\" open failure!" << std::endl;
 		fclose(ifp);
 		return false;
