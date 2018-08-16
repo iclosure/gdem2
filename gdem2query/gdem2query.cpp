@@ -19,7 +19,8 @@
 #define _PRECISION (100)
 #define _PRECISION_SCALE (0.01)
 const gdem2_uint32 _HEADER_SIZE = 8;
-const gdem2_uint32 _MATRIX_SIZE = ((gdem2_uint32)((3600UL / (_PRECISION * _PRECISION_SCALE) + 1UL)));
+const double _PRECISION_DEM = (_PRECISION * _PRECISION_SCALE);
+const gdem2_uint32 _MATRIX_SIZE = ((gdem2_uint32)((3600UL / _PRECISION_DEM + 1UL)));
 
 int get_file_size(char *filepath, size_t filepath_size)
 {
@@ -158,18 +159,10 @@ gdem2_int16 gdem2_query_point(double lat, double lon)
 	if (0 == fp) {
 		return 0;
 	}
-	
-	x = (gdem2_uint32)round(dot_lon * (_MATRIX_SIZE - 1));
-	if (x >= _MATRIX_SIZE) {
-		x = _MATRIX_SIZE - 1;
-	}
 
-	y = (gdem2_uint32)round((1 - dot_lat) * (_MATRIX_SIZE - 1));
-	if (y >= _MATRIX_SIZE) {
-		y = _MATRIX_SIZE - 1;
-	}
-
-	offset = _HEADER_SIZE + (x + y * _MATRIX_SIZE) * 2;
+	x = (gdem2_uint32)round(3600 * (dot_lon + 1 / (3600.0 * 2)));
+	y = (gdem2_uint32)round(3600 * (1.0 - dot_lat));	// 3600 * ((1 + 1/(3600.0*2) - dot_lat) + 1/(3600.0*2))
+	offset = _HEADER_SIZE + (x + y * 3601) * 2;
 
 	if (-1 == fseek(fp, offset, SEEK_SET)) {
 		fclose(fp);
