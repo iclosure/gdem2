@@ -160,8 +160,8 @@ gdem2_int16 gdem2_query_point(double lat, double lon)
 		return 0;
 	}
 
-	x = (gdem2_uint32)round(3600 * (dot_lon + 1 / (3600.0 * 2)));
-	y = (gdem2_uint32)round(3600 * (1.0 - dot_lat));	// 3600 * ((1 + 1/(3600.0*2) - dot_lat) + 1/(3600.0*2))
+	x = (gdem2_uint32)round(0.5 + 3600 * dot_lon);		// 3600 * (1 / (3600.0 * 2) + dot_lon)
+	y = (gdem2_uint32)round(3600 * (1.0 - dot_lat));	// 3600 * (1 + 1/(3600.0*2) - dot_lat - 1/(3600.0*2))
 	offset = _HEADER_SIZE + (x + y * 3601) * 2;
 
 	if (-1 == fseek(fp, offset, SEEK_SET)) {
